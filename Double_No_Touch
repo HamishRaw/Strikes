@@ -1,0 +1,84 @@
+  @impl true
+  def name, do: "double_no_touch"
+
+  @impl true
+  def strike_1(
+        current_price,
+        mins_to_expiry,
+        PDV,
+        asset,
+        instrument_configuration
+      ) do
+    _minutes_to_expiry = seconds_to_expiry / 60
+    days_to_expiry = mins_to_expiry / (60 * 24)
+
+    margin =
+      double_no_touch_margin(
+        mins_to_expiry,
+        asset,
+        instrument_configuration
+      )
+
+    strike_price =
+      approximate_strike_price(
+        current_price,
+        asset.min_tick_movement,
+        mins_to_expiry,
+        margin,
+        PDV
+      )
+
+    do_strike_1(
+      current_price,
+      strike_price,
+      mins_to_expiry,
+      margin,
+      PDV,
+      asset.min_tick_movement
+    )
+  end
+
+  @impl true
+  def strike_2(
+        current_price,
+        mins_to_expiry,
+        PDV,
+        asset,
+        instrument_configuration
+      ) do
+    strike_1 =
+      strike_1(
+        current_price,
+        mins_to_expiry,
+        PDV,
+        asset,
+        instrument_configuration
+      )
+
+    2.0 * current_price - strike_1
+  end
+
+  defp do_strike_1(
+         initial_price,
+         strike_price,
+         mins_to_expiry,
+         margin,
+         PDV,
+         min_tick_movement
+       ) do
+    strike_level_fun =
+      build_strike_level_fun(
+        initial_price,
+        mins_to_expiry,
+        PDV
+      )
+
+    calculate_strike(
+      strike_price,
+      strike_level_fun,
+      margin,
+      min_tick_movement
+    )
+  end
+  
+end
